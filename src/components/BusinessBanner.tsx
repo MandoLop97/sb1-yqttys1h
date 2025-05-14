@@ -1,0 +1,261 @@
+
+import { useState } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Clock, MapPin, Share2, ExternalLink } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { Tables } from "@/integrations/supabase/types";
+import { AspectRatio } from "@/components/ui/aspect-ratio";
+
+type Business = Tables<"businesses">;
+
+interface BusinessBannerProps {
+  business: Business;
+}
+
+const BusinessBanner = ({ business }: BusinessBannerProps) => {
+  const [showHours, setShowHours] = useState(false);
+  const [showLocation, setShowLocation] = useState(false);
+  const [showShare, setShowShare] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const isMobile = useIsMobile();
+
+  const businessHours = [
+    { day: "Lunes", hours: "Abierto todo el día" },
+    { day: "Martes", hours: "Abierto todo el día" },
+    { day: "Miércoles", hours: "Abierto todo el día" },
+    { day: "Jueves", hours: "Abierto todo el día" },
+    { day: "Viernes", hours: "Abierto todo el día" },
+    { day: "Sábado", hours: "Abierto todo el día" },
+    { day: "Domingo", hours: "Abierto todo el día" },
+  ];
+
+  const location = {
+    address: business.location || "Sin dirección",
+    mapUrl:
+      business.latitude && business.longitude
+        ? `https://maps.google.com/?q=${business.latitude},${business.longitude}`
+        : `https://maps.google.com/?q=${encodeURIComponent(
+            business.location || ""
+          )}`,
+  };
+
+  const shareOptions = [
+    {
+      name: "WhatsApp",
+      url: `https://wa.me/?text=${encodeURIComponent(
+        "Mira este restaurante: " + window.location.href
+      )}`,
+    },
+    {
+      name: "Facebook",
+      url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(
+        window.location.href
+      )}`,
+    },
+    {
+      name: "Twitter",
+      url: `https://twitter.com/intent/tweet?url=${encodeURIComponent(
+        window.location.href
+      )}&text=${encodeURIComponent("Mira este restaurante")}`,
+    },
+    {
+      name: "Email",
+      url: `mailto:?subject=${encodeURIComponent(
+        "Restaurante recomendado"
+      )}&body=${encodeURIComponent(
+        "Mira este restaurante: " + window.location.href
+      )}`,
+    },
+  ];
+
+  const handleShare = (option: { name: string; url: string }) => {
+    window.open(option.url, "_blank");
+    setShowShare(false);
+    toast.success(`Compartido en ${option.name}`);
+  };
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(window.location.href);
+    toast.success("Enlace copiado al portapapeles");
+    setShowShare(false);
+  };
+
+  const bannerImage =
+    business.img_banner ||
+    "https://lotito.b-cdn.net/Lotito/ChatGPT+Image+12+may+2025%2C+22_22_02.png";
+  const avatarImage =
+    business.image ||
+    "https://lotito.b-cdn.net/Lotito/99af0886-226f-4ce1-807e-c70035257bd2.png";
+  const businessName = business.name || "Menú de Ejemplo";
+
+  return (
+    <div className="restaurant-banner relative mb-12">
+      {/* Banner elegante con aspect ratio controlado */}
+      <div className="w-full md:w-[96%] md:max-w-7xl md:mx-auto overflow-hidden relative md:rounded-xl shadow-lg">
+        <AspectRatio ratio={isMobile ? 16/9 : 21/9} className="bg-slate-50">
+          <div 
+            className="relative w-full h-full overflow-hidden"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
+            <img
+              src={bannerImage}
+              alt={`${businessName} Banner`}
+              className={`w-full h-full object-cover transition-transform duration-700 ${isHovered ? 'scale-105' : 'scale-100'}`}
+            />
+
+            {/* Gradiente mejorado con transición */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent pointer-events-none z-10" />
+            
+            {/* Overlay de color tenue para mejorar la legibilidad */}
+            <div className="absolute inset-0 bg-navy-800/10 pointer-events-none" />
+
+            {/* Botones flotantes con mejor visual */}
+            <div className="absolute top-4 right-4 flex gap-2 z-20">
+              <button
+                className="bg-white/90 backdrop-blur-sm p-2.5 rounded-full shadow-lg hover:bg-white transition transform hover:scale-105 hover:shadow-xl"
+                onClick={() => setShowHours(true)}
+                aria-label="Ver horarios"
+              >
+                <Clock className="h-5 w-5 text-navy-800" />
+              </button>
+              <button
+                className="bg-white/90 backdrop-blur-sm p-2.5 rounded-full shadow-lg hover:bg-white transition transform hover:scale-105 hover:shadow-xl"
+                onClick={() => setShowLocation(true)}
+                aria-label="Ver ubicación"
+              >
+                <MapPin className="h-5 w-5 text-navy-800" />
+              </button>
+              <button
+                className="bg-white/90 backdrop-blur-sm p-2.5 rounded-full shadow-lg hover:bg-white transition transform hover:scale-105 hover:shadow-xl"
+                onClick={() => setShowShare(true)}
+                aria-label="Compartir"
+              >
+                <Share2 className="h-5 w-5 text-navy-800" />
+              </button>
+            </div>
+          </div>
+        </AspectRatio>
+      </div>
+
+      {/* Avatar mejorado */}
+      <div className="relative">
+        <div className="max-w-4xl mx-auto flex justify-center -mt-16 relative z-30">
+          <Avatar className="h-28 w-28 border-4 border-white shadow-xl bg-white ring-4 ring-white/30">
+            <AvatarImage src={avatarImage} alt={businessName} className="object-cover" />
+            <AvatarFallback className="text-4xl text-navy-800 font-bold bg-orange-500/10">
+              {businessName.charAt(0)}
+            </AvatarFallback>
+          </Avatar>
+        </div>
+      </div>
+
+      {/* Business Name and Details - Mejorados visualmente */}
+      <div className="text-center mt-4 mb-8 animate-fade-in">
+        <h1 className="text-2xl md:text-3xl font-bold text-navy-800">{businessName}</h1>
+
+        <div className="flex justify-center gap-3 mt-4 mb-5">
+          <Badge variant="outline" className="bg-green-50/80 text-green-700 border-green-200 hover:bg-green-100 transition-colors px-3 py-1">
+            A domicilio
+          </Badge>
+          <Badge variant="outline" className="bg-gray-50/80 text-gray-700 border-gray-200 hover:bg-gray-100 transition-colors px-3 py-1">
+            Para recoger
+          </Badge>
+        </div>
+
+        <div className="flex justify-center gap-10 text-sm text-gray-600 max-w-xs mx-auto bg-white/50 backdrop-blur-sm py-3 px-6 rounded-full shadow-sm">
+          <div className="flex flex-col">
+            <span className="text-xs text-gray-500">Tiempo envío</span>
+            <span className="font-medium text-navy-800">25 - 45 mins</span>
+          </div>
+
+          <Separator orientation="vertical" className="h-10" />
+
+          <div className="flex flex-col">
+            <span className="text-xs text-gray-500">Costo envío</span>
+            <span className="font-medium text-navy-800">Desde $20 MXN</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Diálogos mejorados */}
+      <Dialog open={showHours} onOpenChange={setShowHours}>
+        <DialogContent className="sm:max-w-md rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-center">Horario</DialogTitle>
+          </DialogHeader>
+          <div className="py-2">
+            {businessHours.map((item) => (
+              <div key={item.day} className="flex justify-between py-2.5 border-b last:border-b-0">
+                <div className="font-medium text-navy-800">{item.day}</div>
+                <div className="text-gray-600">{item.hours}</div>
+              </div>
+            ))}
+          </div>
+          <Button onClick={() => setShowHours(false)} className="w-full mt-4">
+            Cerrar
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showLocation} onOpenChange={setShowLocation}>
+        <DialogContent className="sm:max-w-md rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-center">Ubicación</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-gray-700 mb-6">{location.address}</p>
+            <div className="flex gap-4 flex-col sm:flex-row">
+              <Button className="flex-1 gap-2" onClick={() => window.open(location.mapUrl, "_blank")}>
+                <ExternalLink className="h-4 w-4" />
+                Ver la ubicación en el mapa
+              </Button>
+              <Button variant="outline" className="flex-1" onClick={() => setShowLocation(false)}>
+                Cerrar
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showShare} onOpenChange={setShowShare}>
+        <DialogContent className="sm:max-w-md rounded-xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-center">Compartir</DialogTitle>
+            <DialogDescription className="text-center">
+              Comparte este menú en tus redes sociales
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid grid-cols-2 gap-4 py-4">
+            {shareOptions.map((option) => (
+              <Button
+                key={option.name}
+                variant="outline"
+                className="flex items-center justify-center gap-2 hover:bg-slate-50 transition-colors"
+                onClick={() => handleShare(option)}
+              >
+                {option.name}
+              </Button>
+            ))}
+          </div>
+          <Button variant="secondary" className="w-full mt-2" onClick={handleCopyLink}>
+            Copiar enlace
+          </Button>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+};
+
+export default BusinessBanner;
